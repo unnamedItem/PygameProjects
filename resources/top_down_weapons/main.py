@@ -37,7 +37,8 @@ class Game():
             K_LCTRL: 0,
             K_p: 0,
             KEYUP: 0,
-            KEYDOWN: 0
+            KEYDOWN: 0,
+            BUTTON_LEFT: 0
         }
 
         # Weapon ------------------------------------------ #
@@ -84,10 +85,10 @@ class Game():
                     self.keys[K_p] = 1
                     
                 if event.key == K_m:
-                    self.weapon.recoil -= 1
+                    self.weapon.recoil -= 0.2
                     
                 if event.key == K_k:
-                    self.weapon.recoil += 1
+                    self.weapon.recoil += 0.2
                     
                 if event.key == K_j:
                     self.weapon.accuracy -= 1
@@ -136,8 +137,15 @@ class Game():
                     self.keys[K_p] = 0
 
             if event.type == MOUSEBUTTONDOWN:
-                if event.button == BUTTON_LEFT:
+                if event.button == BUTTON_LEFT and not self.keys[K_LCTRL]:
                     self.weapon.shoot(self.bullets)
+                    
+                if event.button == BUTTON_LEFT:
+                    self.keys[BUTTON_LEFT] = 1
+                    
+            if event.type == MOUSEBUTTONUP:
+                if event.button == BUTTON_LEFT:
+                    self.keys[BUTTON_LEFT] = 0
 
 
     # Update Game ------------------------------- #
@@ -152,6 +160,9 @@ class Game():
 
         if self.keys[KEYUP]:
             self.fps_changed = False
+            
+        if self.keys[K_LCTRL] and self.keys[BUTTON_LEFT]:
+            self.weapon.shoot(self.bullets)
 
         self.weapon.update(dt, self.display_size / 2, pointer)
 
