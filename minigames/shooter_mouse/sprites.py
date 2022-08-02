@@ -112,9 +112,9 @@ class Player(pygame.sprite.Sprite):
         img_copy = pygame.transform.rotate(self.image, (self.angle - 90) * -1)
         surface.blit(img_copy, self.pos - (vec(img_copy.get_size()) / 2))
 
-        # pygame.draw.circle(surface, BLUE, self.pos, 3)
-        # pygame.draw.line(surface, RED, self.pos, (self.pos + self.vel * 0.5), 2)
-        # pygame.draw.line(surface, GREEN, self.pos, (self.pos + self.acc * 0.25), 2)
+        pygame.draw.circle(surface, BLUE, self.pos, 3)
+        pygame.draw.line(surface, RED, self.pos, (self.pos + self.vel * 0.5), 2)
+        pygame.draw.line(surface, GREEN, self.pos, (self.pos + self.acc * 0.25), 2)
 
         vel = str(round(self.vel.magnitude(), 2))
         pos = '(' + str((round(self.pos[0], 2))) + ', ' + str((round(self.pos[1], 2))) + ')'
