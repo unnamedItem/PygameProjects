@@ -3,7 +3,6 @@ import pygame, sys, time
 from pygame.locals import *
 from pygame import Vector2
 
-from sprites import Player, Bullet, Tarjet
 from constants import *
 
 
@@ -13,7 +12,7 @@ class Game():
         pygame.init()
 
         # Display Settings -------------------------------- #
-        self.scale = 2
+        self.scale = 1.5
         self.display_size = Vector2(DISPLAY_SIZE)
         self.screen_size = Vector2(DISPLAY_SIZE) * self.scale
         self.display = pygame.Surface(self.display_size)
@@ -22,14 +21,19 @@ class Game():
         pygame.display.set_caption(game_name)
 
         # Font -------------------------------------------- #
-        self.font = pygame.font.SysFont('verdana', 10)
+        self.font_0 = pygame.font.Font('./assets/fonts/Grand9K_Pixel.ttf', 10)
+        self.font_1 = pygame.font.Font('./assets/fonts/Grand9K_Pixel.ttf', 12)
+        self.font_2 = pygame.font.Font('./assets/fonts/Grand9K_Pixel.ttf', 14)
+        self.font_3 = pygame.font.Font('./assets/fonts/Grand9K_Pixel.ttf', 16)
+        self.font_4 = pygame.font.Font('./assets/fonts/Grand9K_Pixel.ttf', 18)
+        self.font_5 = pygame.font.Font('./assets/fonts/Grand9K_Pixel.ttf', 20)
 
         # Clock ------------------------------------------- #
         self.main_clock = pygame.time.Clock()
         self.last_time = time.time()
         self.fps = self.main_clock.get_fps()
         self.fps_display = ''
-        self.fps_show = True
+        self.fps_show = False
         self.fps_changed = False
 
         # Keys pressed ------------------------------------ #
@@ -38,18 +42,17 @@ class Game():
             K_p: 0,
             KEYUP: 0,
             KEYDOWN: 0,
+            BUTTON_LEFT: 0,
+            BUTTON_RIGHT: 0,
         }
-
-        # Player data ------------------------------------- #
-        self.player = Player(self.scale, self.display_size / 2)
-        self.ammo = 100
-        self.ammo_tick = 0
-
-        # Bullets pool ------------------------------------ #
-        self.bullets = [ Bullet() for x in range(BULLET_POOL_SIZE) ]
-
-        self.tarjet = Tarjet()
-        self.last_hit = 0
+        
+        # Mouse ------------------------------------------- #
+        self.mouse_x = 0
+        self.mouse_y = 0
+        
+        # Draw Tool --------------------------------------- #
+        self.draw_size = (32, 32)
+        self.map_data = [ [0 for _ in range(self.draw_size[0])] for _ in range(self.draw_size[1]) ]
 
 
     # Run Game ---------------------------------- #
@@ -63,8 +66,6 @@ class Game():
 
     # Handle events ----------------------------- #
     def process_events(self) -> None:
-        mx, my = pygame.mouse.get_pos()
-
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.quit()
@@ -91,66 +92,68 @@ class Game():
 
                 if event.key == K_p:
                     self.keys[K_p] = 0
-
+                    
             if event.type == MOUSEBUTTONDOWN:
-                if event.button == BUTTON_LEFT and self.ammo >= AMMO_COST:
-                    bullet_data = self.player.shoot((mx, my))
-                    for bullet in self.bullets:
-                        if bullet.disabled:
-                            bullet.pos = bullet_data['bullet_pos']
-                            bullet.vel = bullet_data['bullet_vel']
-                            bullet.disabled = 0
-                            self.ammo -= AMMO_COST
-                            break
+                if event.button == BUTTON_RIGHT:
+                    self.keys[BUTTON_RIGHT] = 1
                 
+                if event.button == BUTTON_LEFT:
+                    self.keys[BUTTON_LEFT] = 1
+                    
+            if event.type == MOUSEBUTTONUP:
+                if event.button == BUTTON_RIGHT:
+                    self.keys[BUTTON_RIGHT] = 0
+                
+                if event.button == BUTTON_LEFT:
+                    self.keys[BUTTON_LEFT] = 0
+
 
     # Update Game ------------------------------- #
     def update(self, dt) -> None:
-        mx, my = pygame.mouse.get_pos()          
+        self.fps_update()
+        
+        self.mouse_x = pygame.mouse.get_pos()[0] / self.scale
+        self.mouse_y = pygame.mouse.get_pos()[1] / self.scale
 
         if self.keys[K_LCTRL] and self.keys[K_p] and not self.fps_changed:
             self.fps_show = not self.fps_show
             self.fps_changed = True
 
-        for bullet in self.bullets:
-            if not bullet.disabled:
-                bullet.update(dt)
+        if self.keys[KEYUP]:
+            self.fps_changed = False
             
-                collide = pygame.sprite.collide_rect(self.tarjet, bullet)
-                if collide:
-                    self.tarjet.image.fill(RED)
-                    bullet.disabled = 1
-                    self.last_hit = pygame.time.get_ticks()
-
-        if pygame.time.get_ticks() - self.last_hit > HIT_DELAY:
-                    self.tarjet.image.fill(WHITE)
-
-        if pygame.time.get_ticks() - self.ammo_tick > AMMO_RECOVER_DELAY:
-            if self.ammo < MAX_AMMO:
-                self.ammo_tick = pygame.time.get_ticks()
-                self.ammo += AMMO_RECOVER_RATE
-
-        self.player.update(dt, (mx, my))
-        self.fps_update()
+        if self.keys[BUTTON_LEFT]:
+            if 32 <= self.mouse_x < DISPLAY_SIZE[0] - 192 and 32 <= self.mouse_y < DISPLAY_SIZE[1] - 32:
+                self.map_data[int((self.mouse_x - 32) / 16)][int((self.mouse_y - 32) / 16)] = 1
+                
+        if self.keys[BUTTON_RIGHT]:
+            if 32 <= self.mouse_x < DISPLAY_SIZE[0] - 192 and 32 <= self.mouse_y < DISPLAY_SIZE[1] - 32:
+                self.map_data[int((self.mouse_x - 32) / 16)][int((self.mouse_y - 32) / 16)] = 0
 
 
     # Draw Game --------------------------------- #
     def draw(self):
-        self.display.fill(BK_COLOR)
+        self.display.fill((30,20,30))
 
         # Layers ------------------------------------- #
         layer0 = pygame.Surface(self.display.get_size(), SRCALPHA)
         self.fps_render(layer0)
-
-        for bullet in self.bullets:
-            if not bullet.disabled:
-                bullet.draw(layer0)
-
-        self.player.draw(layer0, self.font)
-        self.tarjet.draw(layer0)
-
-        # Ammo bar
-        pygame.draw.line(layer0, BLUE, (self.display_size[0] - 65, 20), ( self.display_size[0] - 65 + (self.ammo / 2), 20), 10)
+        
+        for x in range(32, DISPLAY_SIZE[0] - 176, 16):
+            pygame.draw.line(layer0, (140, 140, 140), (x, 32), (x, DISPLAY_SIZE[1] - 32), 1)
+        for y in range(32, DISPLAY_SIZE[1] - 16, 16):
+            pygame.draw.line(layer0, (140, 140, 140), (32, y), (DISPLAY_SIZE[0] - 192, y), 1)
+            
+        dx = 0
+        for x in self.map_data:
+            dy = 0
+            for y in x:
+                if y == 1:
+                    pygame.draw.rect(layer0, (0, 200, 0), (dx * 16 + 33, dy * 16 + 33, 15, 15))
+                dy += 1
+            dx += 1
+            
+        pygame.draw.rect(layer0, (140, 14, 14), (int(self.mouse_x / 16) * 16, int(self.mouse_y / 16) * 16, 16, 16), 1)
 
         # Blit Layers -------------------------------- #
         self.display.blit(layer0, Vector2())
@@ -167,7 +170,7 @@ class Game():
 
     # Delta Time -------------------------------- #
     def delta_time(self) -> float:
-        self.main_clock.tick(FPS_LIMIT)
+        self.main_clock.tick(60)
         self.fps = self.main_clock.get_fps()
         dt = time.time() - self.last_time
         self.last_time = time.time()
@@ -176,15 +179,15 @@ class Game():
 
     # Fps Update -------------------------------- #
     def fps_update(self) -> None:
-        fps_str = 'FPS: ' + str(round(self.fps, 2))
-        text = self.font.render(fps_str, True, WHITE)
+        fps_str = str(round(self.fps, 2))
+        text = self.font_0.render(fps_str, True, (255, 255, 255))
         self.fps_display = text
-
+        
 
     # Fps Render -------------------------------- #
     def fps_render(self, layer: pygame.surface.Surface) -> None:
         if self.fps_show:
-            layer.blit(self.fps_display, (self.display_size[0] - 65, 5))
+            layer.blit(self.fps_display, (self.display_size[0] - self.fps_display.get_size()[0] - 10, 5))
 
 
 Game(GAME_NAME).run()
