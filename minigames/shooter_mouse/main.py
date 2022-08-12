@@ -106,7 +106,7 @@ class Game():
 
     # Update Game ------------------------------- #
     def update(self, dt) -> None:
-        mx, my = pygame.mouse.get_pos()             
+        mx, my = pygame.mouse.get_pos()          
 
         if self.keys[K_LCTRL] and self.keys[K_p] and not self.fps_changed:
             self.fps_show = not self.fps_show
