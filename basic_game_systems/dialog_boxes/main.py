@@ -1,13 +1,13 @@
-import pygame, sys, time
+import pygame, sys, time, random
 
 from pygame.locals import *
 from pygame import Vector2
 
 from constants import *
-from dialog_boxes import dialog_box
+from dialog_boxes import DialogBox
 
 
-TEST_TEXT = '\
+DEMO_TEXT = '\
     Welcome to simple dialog boxes!\n\
     This is a random text dialog.\n\
     \n\
@@ -48,11 +48,8 @@ class Game():
             KEYDOWN: 0
         }
         
-        # Text Animation ---------------------------------- #
-        self.text_speed = 20
-        self.count_chars = 0.0
-        self.text_length = len(TEST_TEXT)
-        self.text_display = False
+        # Dialog Boxes ------------------------------------ #
+        self.dialog_box = DialogBox()
 
 
     # Run Game ---------------------------------- #
@@ -67,6 +64,8 @@ class Game():
     # Handle events ----------------------------- #
     def process_events(self) -> None:
         for event in pygame.event.get():
+            self.dialog_box.process_event(event)
+
             if event.type == QUIT:
                 self.quit()
 
@@ -83,8 +82,8 @@ class Game():
                 if event.key == K_p:
                     self.keys[K_p] = 1
                     
-                if event.key == K_SPACE:
-                    self.text_display = not self.text_display
+                if event.key == K_d:
+                    self.dialog_box.new_dialog(DEMO_TEXT, border_radius=10)
 
             if event.type == KEYUP:
                 self.keys[KEYDOWN] = 0
@@ -100,6 +99,7 @@ class Game():
     # Update Game ------------------------------- #
     def update(self, dt) -> None:
         self.fps_update()
+        self.dialog_box.update(dt)
 
         if self.keys[K_LCTRL] and self.keys[K_p] and not self.fps_changed:
             self.fps_show = not self.fps_show
@@ -107,9 +107,6 @@ class Game():
 
         if self.keys[KEYUP]:
             self.fps_changed = False
-            
-        if self.count_chars < self.text_length and self.text_display:
-            self.count_chars += self.text_speed * dt
 
 
     # Draw Game --------------------------------- #
@@ -118,7 +115,7 @@ class Game():
 
         # Layers ------------------------------------- #
         layer0 = pygame.Surface(self.display.get_size(), SRCALPHA)
-        dialog_box(TEST_TEXT[0:int(self.count_chars)], layer0, border_radius=10)
+        self.dialog_box.render(layer0)
         self.fps_render(layer0)
 
         # Blit Layers -------------------------------- #
