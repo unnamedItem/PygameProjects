@@ -1,0 +1,3 @@
+GAME_NAME = 'Template'
+DISPLAY_SIZE = (480, 360)
+DEFAULT_BPP = 16
