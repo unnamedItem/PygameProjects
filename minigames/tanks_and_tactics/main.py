@@ -35,7 +35,10 @@ class Game():
 
         # System HUI
         self.cursor_pos = Vector2(0,0)
+        self.cursor_img = 'cursor'
         self.system_assets = { key[:-4]: pygame.image.load(abspath('') + '/assets/system/' + key) for key in listdir(abspath('') + '/assets/system') }
+        self.menu_rects = []
+        self.acctions_selected = []
 
         # Tile Map
         #self.tile_map = [ [ random.choice([0,0] + [1 for _ in range(x%2 + y%3)]) for x in range(16) ] for y in range(16) ]
@@ -70,6 +73,21 @@ class Game():
                 if event.key == K_p and keys[K_LCTRL]:
                     self.fps_show = not self.fps_show
 
+            if self.execute_acctions:
+                return
+
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == BUTTON_LEFT:
+                    for rect, btn in self.menu_rects:
+                        if pygame.Rect.colliderect(rect, (self.cursor_pos[0], self.cursor_pos[1], 1, 1)):
+                            if "slot" in btn:
+                                if len(self.acctions_selected) > int(btn[5:]):
+                                    self.acctions_selected.pop(int(btn[5:]))
+                            elif btn == "start":
+                                self.execute_acctions = True
+                            elif len(self.acctions_selected) < 10:
+                                self.acctions_selected.append(btn)
+
 
     # Update Game ------------------------------- #
     def update(self, dt) -> None:
@@ -89,6 +107,28 @@ class Game():
             for x, tile in enumerate(row):
                 if tile == 1:
                     pygame.draw.rect(layer0, (150, 150, 120), (20 + (20 * x), 20 + (20 * y), 20, 20))
+
+        menu_arrows = ["arrow_top", "arrow_bottom", "arrow_left", "arrow_right"]
+        menu_shoot = ["shoot_top", "shoot_bottom", "shoot_left", "shoot_right"]
+        menu_rects = []
+        
+        for idx, img_name in enumerate(menu_arrows):
+            menu_rects.append((layer0.blit(self.system_assets[img_name], (360 + idx * 25,20)), img_name))
+        for idx, img_name in enumerate(menu_shoot):
+            menu_rects.append((layer0.blit(self.system_assets[img_name], (360 + idx * 25,50)), img_name))
+
+        for row in range(2):
+            for idx in range(5):
+                menu_rects.append((pygame.draw.rect(layer0, (120,130,120), (354 + idx*22, 80 + row*22, 22, 22), 1, -1), 'slot-' + str(idx + row*5)))
+
+        menu_rects.append((pygame.draw.rect(layer0, (30, 150, 220), (360, 320, 100, 20)), 'start'))
+
+        for idx, acction in enumerate(self.acctions_selected):
+            layer0.blit(self.system_assets[acction], (355 + (idx%5)*22, 81 + 22*(int(idx/5))))
+
+        self.menu_rects = menu_rects
+
+        layer0.blit(self.system_assets[self.cursor_img], self.cursor_pos)
         self.fps_render(layer0)
 
         # Blit Layers -------------------------------- #
