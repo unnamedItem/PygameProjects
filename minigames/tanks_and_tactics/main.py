@@ -1,6 +1,6 @@
 from os import listdir
 from posixpath import abspath
-import pygame, sys, time
+import pygame, sys, time, random
 
 from pygame.locals import *
 from pygame import Vector2
@@ -48,6 +48,14 @@ class Game():
         #        for x in range(2):
         #            row[x - dx] = 0
 
+        # Player
+        self.player_rect = pygame.Rect(324,324, 12, 12)
+
+        # Acctions
+        self.execute_acctions = False
+        self.acction = None
+        self.move_count = 0
+        self.bullets = []
 
 
     # Run Game ---------------------------------- #
@@ -94,6 +102,40 @@ class Game():
         self.cursor_pos = Vector2(pygame.mouse.get_pos()) / self.scale
         self.fps_update()
 
+        if self.execute_acctions:
+            if not self.acction and self.acctions_selected:
+                self.acction = self.acctions_selected.pop(0)
+            elif not self.acctions_selected and not self.acction:
+                self.execute_acctions = False
+            elif self.acction:
+                if "arrow" in self.acction:
+                    self.move_count += 1
+                    if self.move_count == 21:
+                        self.move_count = 0
+                        self.acction = None
+                    elif "top" in self.acction:
+                        self.player_rect.y -= 1
+                    elif "bottom" in self.acction:
+                        self.player_rect.y += 1
+                    elif "left" in self.acction:
+                        self.player_rect.x -= 1
+                    elif "right" in self.acction:
+                        self.player_rect.x += 1
+                else:
+                    if "top" in self.acction:
+                        self.bullets.append([Vector2(0,-2), Vector2(self.player_rect.center)])
+                    elif "bottom" in self.acction:
+                        self.bullets.append([Vector2(0,2), Vector2(self.player_rect.center)])
+                    elif "left" in self.acction:
+                        self.bullets.append([Vector2(-2,0), Vector2(self.player_rect.center)])
+                    elif "right" in self.acction:
+                        self.bullets.append([Vector2(2,0), Vector2(self.player_rect.center)])
+                    self.acction = None
+
+        for bullet in self.bullets:
+            bullet[1] = bullet[1] + bullet[0]
+
+
 
     # Draw Game --------------------------------- #
     def draw(self):
@@ -127,6 +169,16 @@ class Game():
             layer0.blit(self.system_assets[acction], (355 + (idx%5)*22, 81 + 22*(int(idx/5))))
 
         self.menu_rects = menu_rects
+
+        pygame.draw.rect(layer0, (255,0,0), self.player_rect)
+
+        for bullet in self.bullets:
+            pygame.draw.rect(layer0, (255, 255, 255), (bullet[1][0] - 2, bullet[1][1] - 2, 4, 4))
+
+        self.cursor_img = "cursor"
+        for rect, _ in menu_rects:
+            if pygame.Rect.colliderect(rect, (self.cursor_pos[0], self.cursor_pos[1], 1, 1)):
+                self.cursor_img = 'finger'
 
         layer0.blit(self.system_assets[self.cursor_img], self.cursor_pos)
         self.fps_render(layer0)
@@ -163,7 +215,7 @@ class Game():
     # Fps Render -------------------------------- #
     def fps_render(self, layer: pygame.surface.Surface) -> None:
         if self.fps_show:
-            layer.blit(self.fps_display, (self.display_size[0] - 40, 5))
+            layer.blit(self.fps_display, (self.display_size[0] - 40, 0))
 
 
 Game(GAME_NAME).run()
