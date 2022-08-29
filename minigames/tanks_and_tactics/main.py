@@ -37,6 +37,15 @@ class Game():
         self.cursor_pos = Vector2(0,0)
         self.system_assets = { key[:-4]: pygame.image.load(abspath('') + '/assets/system/' + key) for key in listdir(abspath('') + '/assets/system') }
 
+        # Tile Map
+        #self.tile_map = [ [ random.choice([0,0] + [1 for _ in range(x%2 + y%3)]) for x in range(16) ] for y in range(16) ]
+        self.tile_map = [ [ x%2 + y%2 for x in range(16) ] for y in range(16) ]
+        #for y1, y2, dx in [(0, 2, 0), (0, 2, 2), (14, 16, 0), (14, 16, 2)]:
+        #    for row in self.tile_map[y1:y2]:
+        #        for x in range(2):
+        #            row[x - dx] = 0
+
+
 
     # Run Game ---------------------------------- #
     def run(self) -> None:
@@ -74,7 +83,12 @@ class Game():
 
         # Layers ------------------------------------- #
         layer0 = pygame.Surface(self.display.get_size(), SRCALPHA)
-        layer0.blit(self.system_assets["cursor"], self.cursor_pos)
+        pygame.draw.rect(layer0, (0,0,0), (20,20,320,320), 0, -1)
+        pygame.draw.rect(layer0, (60,80,65), (18,18,324,324), 2, -1)
+        for y, row in enumerate(self.tile_map):
+            for x, tile in enumerate(row):
+                if tile == 1:
+                    pygame.draw.rect(layer0, (150, 150, 120), (20 + (20 * x), 20 + (20 * y), 20, 20))
         self.fps_render(layer0)
 
         # Blit Layers -------------------------------- #
