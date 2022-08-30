@@ -11,7 +11,11 @@ DEMO_TEXT = '\
     Welcome to simple dialog boxes!\n\
     This is a random text dialog.\n\
     \n\
-    Goodbye!\
+    Goodbye!\n\
+    \n\
+    \n\
+    \n\
+    Large text dialog.\
 '
 
 class Game():
