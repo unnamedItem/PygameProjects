@@ -24,7 +24,7 @@ class Game():
         pygame.display.set_caption(game_name)
 
         # Font -------------------------------------------- #
-        self.font = pygame.font.SysFont('verdana', 10)
+        self.font = pygame.font.SysFont('verdana', 12)
 
         # Clock ------------------------------------------- #
         self.main_clock = pygame.time.Clock()
@@ -155,15 +155,18 @@ class Game():
         menu_rects = []
         
         for idx, img_name in enumerate(menu_arrows):
-            menu_rects.append((layer0.blit(self.system_assets[img_name], (360 + idx * 25,20)), img_name))
+            menu_rects.append((layer0.blit(self.system_assets[img_name], (362 + idx * 25,20)), img_name))
         for idx, img_name in enumerate(menu_shoot):
-            menu_rects.append((layer0.blit(self.system_assets[img_name], (360 + idx * 25,50)), img_name))
+            menu_rects.append((layer0.blit(self.system_assets[img_name], (362 + idx * 25,50)), img_name))
 
         for row in range(2):
             for idx in range(5):
                 menu_rects.append((pygame.draw.rect(layer0, (120,130,120), (354 + idx*22, 80 + row*22, 22, 22), 1, -1), 'slot-' + str(idx + row*5)))
 
-        menu_rects.append((pygame.draw.rect(layer0, (30, 150, 220), (360, 320, 100, 20)), 'start'))
+        menu_rects.append((pygame.draw.rect(layer0, (179, 186, 205), (360, 320, 100, 20), border_radius=10), 'start'))
+        pygame.draw.rect(layer0, (79,85,105), (360, 320, 100, 20), 1, border_radius=10)
+        start_text = self.font.render("RUN", True, (79,85,105))
+        layer0.blit(start_text, (410 - start_text.get_width() / 2, 330 - start_text.get_height() / 2))
 
         for idx, acction in enumerate(self.acctions_selected):
             layer0.blit(self.system_assets[acction], (355 + (idx%5)*22, 81 + 22*(int(idx/5))))
