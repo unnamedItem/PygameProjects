@@ -1,106 +1,74 @@
+import os
 import pygame, sys, time
-
 from pygame.locals import *
-from pygame import Vector2
 
+import commons
 from constants import *
 
+pygame.init()
 
-class Game():
-    def __init__(self, game_name: str) -> None:
-        # Pygame Init ------------------------------------- #
-        pygame.init()
-
-        # Display Settings -------------------------------- #
-        self.scale = 2
-        self.display_size = Vector2(DISPLAY_SIZE)
-        self.screen_size = Vector2(DISPLAY_SIZE) * self.scale
-        self.display = pygame.Surface(self.display_size)
-        self.screen = pygame.display.set_mode((self.screen_size), DOUBLEBUF, DEFAULT_BPP)
-        self.game_name = game_name
-        pygame.display.set_caption(game_name)
-
-        # Font -------------------------------------------- #
-        self.font = pygame.font.SysFont('verdana', 10)
-
-        # Clock ------------------------------------------- #
-        self.main_clock = pygame.time.Clock()
-        self.last_time = time.time()
-        self.fps = self.main_clock.get_fps()
-        self.fps_display = ''
-        self.fps_show = True
+import stages.index as stages
 
 
-    # Run Game ---------------------------------- #
+class Game:
+    def __init__(self) -> None:
+        self.isRunning:bool = True
+
+        self.display:pygame.Surface = pygame.display.set_mode(commons.display_size, DOUBLEBUF)
+
+        self.main_clock:pygame.time.Clock = pygame.time.Clock()
+        self.last_time:float = time.time()
+        self.fps_max:float = 140.0
+        self.fps:float = self.main_clock.get_fps()
+
+
     def run(self) -> None:
-        while 1:
-            dt = self.delta_time()
-            self.process_events()
-            self.update(dt)
-            self.draw()
+        while self.isRunning:       
+            self.events()
+            self.update()
+            self.render()
 
 
-    # Handle events ----------------------------- #
-    def process_events(self) -> None:
-        keys = pygame.key.get_pressed()
-        for event in pygame.event.get():
+    def events(self) -> None:
+        for event in pygame.event.get():            
             if event.type == QUIT:
-                self.quit()
+                sys.exit()
 
-            if event.type == KEYDOWN:                   
-                if event.key == K_ESCAPE:
-                    self.quit()
+            if event.type == MOUSEBUTTONDOWN:
+                commons.mouse_pressed = pygame.mouse.get_pressed()
 
-                if event.key == K_p and keys[K_LCTRL]:
-                    self.fps_show = not self.fps_show
+            if event.type == MOUSEBUTTONUP:
+                commons.mouse_pressed = pygame.mouse.get_pressed()
+
+            if event.type == MOUSEMOTION:
+                commons.mouse_pos = pygame.mouse.get_pos()
+                
+            stages.active_stage.events(event)
 
 
-    # Update Game ------------------------------- #
-    def update(self, dt) -> None:
-        self.fps_update()
+    def update(self) -> None:
+        commons.dt = self.delta_time()
+        stages.active_stage.update()
 
 
-    # Draw Game --------------------------------- #
-    def draw(self):
-        self.display.fill((30,20,30))
-
-        # Layers ------------------------------------- #
-        layer0 = pygame.Surface(self.display.get_size(), SRCALPHA)
-        self.fps_render(layer0)
-
-        # Blit Layers -------------------------------- #
-        self.display.blit(layer0, Vector2())
-
-        pygame.transform.scale(self.display, self.screen.get_size(), self.screen)
+    def render(self) -> None:
+        self.display.fill(BACKGROUND_COLOR)
+        stages.active_stage.render(self.display)
+        self.fps_render()
         pygame.display.flip()
 
-
-    # Exit Game --------------------------------- #
-    def quit(self) -> None:
-        pygame.quit()
-        sys.exit()
-
-
-    # Delta Time -------------------------------- #
+    
     def delta_time(self) -> float:
-        self.main_clock.tick(0)
+        self.main_clock.tick(self.fps_max)
         self.fps = self.main_clock.get_fps()
         dt = time.time() - self.last_time
         self.last_time = time.time()
         return dt
+    
+    def fps_render(self):
+        fps:pygame.surface.Surface = pygame.font.Font(None, 40).render(str(int(self.fps)), True, WHITE)
+        self.display.blit(fps, (commons.display_w - fps.get_size()[0] - 20, 20))
+        
 
 
-    # Fps Update -------------------------------- #
-    def fps_update(self) -> None:
-        fps_str = str(round(self.fps, 2))
-        text = self.font.render(fps_str, True, (255, 255, 255))
-        self.fps_display = text
-
-
-    # Fps Render -------------------------------- #
-    def fps_render(self, layer: pygame.surface.Surface) -> None:
-        if self.fps_show:
-            layer.blit(self.fps_display, (self.display_size[0] - 40, 5))
-
-
-Game(GAME_NAME).run()
+Game().run()
