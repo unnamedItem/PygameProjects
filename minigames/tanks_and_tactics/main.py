@@ -9,20 +9,21 @@ from constants import *
 
 
 class Game():
-    def __init__(self, game_name: str) -> None:
+    def __init__(self) -> None:
         # Pygame Init ------------------------------------- #
         pygame.init()
         pygame.mouse.set_visible(False)
 
         # Display Settings -------------------------------- #
-        self.scale = 2
         self.display_size = Vector2(DISPLAY_SIZE)
-        self.screen_size = Vector2(DISPLAY_SIZE) * self.scale
+        self.screen_size_list = [size for size in pygame.display.list_modes() if size[0] > self.display_size[0] and size[1] > self.display_size[1]]
+        self.screen_size = self.screen_size_list[12]
+        self.scale = self.screen_size[0] / self.display_size[0] if (self.screen_size[0] / self.display_size[0]) < (self.screen_size[1] / self.display_size[1]) else self.screen_size[1] / self.display_size[1]
         self.display = pygame.Surface(self.display_size)
         self.screen = pygame.display.set_mode((self.screen_size), DOUBLEBUF, DEFAULT_BPP)
-        self.game_name = game_name
-        pygame.display.set_caption(game_name)
-
+        self.game_name = GAME_NAME
+        pygame.display.set_caption(self.game_name)
+        
         # Font -------------------------------------------- #
         self.font = pygame.font.SysFont('verdana', 12)
 
@@ -99,7 +100,7 @@ class Game():
 
     # Update Game ------------------------------- #
     def update(self, dt) -> None:
-        self.cursor_pos = Vector2(pygame.mouse.get_pos()) / self.scale
+        self.cursor_pos = (Vector2(pygame.mouse.get_pos() - Vector2((self.screen_size[0] - self.display_size[0] * self.scale) / 2,0)) / self.scale) 
         self.fps_update()
 
         if self.execute_acctions:
@@ -189,7 +190,8 @@ class Game():
         # Blit Layers -------------------------------- #
         self.display.blit(layer0, Vector2())
 
-        pygame.transform.scale(self.display, self.screen.get_size(), self.screen)
+        self.screen.fill((30,20,30))
+        self.screen.blit(pygame.transform.scale(self.display, self.display_size * self.scale), ((self.screen_size[0] - self.display_size[0] * self.scale) / 2,0))
         pygame.display.flip()
 
 
@@ -221,4 +223,4 @@ class Game():
             layer.blit(self.fps_display, (self.display_size[0] - 40, 0))
 
 
-Game(GAME_NAME).run()
+Game().run()
