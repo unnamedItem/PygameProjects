@@ -1,3 +1,0 @@
-GAME_NAME = 'Template'
-DISPLAY_SIZE = (360, 240)
-DEFAULT_BPP = 16
